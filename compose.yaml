@@ -1,0 +1,6 @@
+﻿services:
+  flashcardgeneratorapi:
+    image: flashcardgeneratorapi
+    build:
+      context: .
+      dockerfile: FlashCardGeneratorAPI/Dockerfile
