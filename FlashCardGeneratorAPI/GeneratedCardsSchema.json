@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GeneratedCards",
+  "type": "object",
+  "properties": {
+    "flashCards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "OriginalLanguage": {
+            "type": "object",
+            "properties": {
+              "Text": { "type": "string" }
+            },
+            "required": ["Text"],
+            "additionalProperties": false
+          },
+          "TargetLanguage": {
+            "type": "object",
+            "properties": {
+              "Text": { "type": "string" }
+            },
+            "required": ["Text"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["OriginalLanguage", "TargetLanguage"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["flashCards"],
+  "additionalProperties": false
+}

@@ -1,6 +1,7 @@
 using FlashCardGeneratorAPI.Models;
 using FlashCardGeneratorAPI.Repositories;
 using FluentResults;
+using NLanguageTag;
 
 namespace FlashCardGeneratorAPI.Services;
 
@@ -13,6 +14,32 @@ public class DeckService : IDeckService
     {
         _deckRepository = deckRepository;
         _generatorService = generatorService;
+    }
+
+    public async Task<Result<Deck>> GetTestDeckAsync(CancellationToken cancellationToken)
+    {
+        var cards = await _generatorService.GenerateFlashCards(new GenerationRequest
+        {
+            OriginalLanguage = Language.EN,
+            TargetLanguage = Language.PT,
+            Level = LanguageLevel.A1,
+            Count = 5,
+        }, CancellationToken.None);
+        
+        if (cards.IsFailed)
+        {
+            return Result.Fail(cards.Errors);
+        }
+
+        var deck = new Deck
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = string.Empty,
+            UserId = string.Empty,
+            FlashCards = cards.Value
+        };
+
+        return deck;
     }
     
     public async Task<Result<Deck>> GetDeckByIdAsync(string id, CancellationToken cancellationToken)
@@ -74,6 +101,7 @@ public class DeckService : IDeckService
 
 public interface IDeckService
 {
+    Task<Result<Deck>> GetTestDeckAsync(CancellationToken cancellationToken);
     Task<Result<Deck>> GetDeckByIdAsync(string id, CancellationToken cancellationToken);
     
     Task<Result<Deck>> CreateDeckAsync(GenerationRequest request, CancellationToken cancellationToken);

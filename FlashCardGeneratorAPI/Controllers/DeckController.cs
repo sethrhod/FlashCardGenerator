@@ -18,6 +18,21 @@ public class DeckController : ControllerBase
         _deckService = deckService;
         _logger = logger;
     }
+    
+    [HttpGet("GetTestDeck")]
+    [ProducesResponseType(typeof(Deck), 200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(typeof(ProblemDetails), 500)]
+    public async Task<IActionResult> GetTestDeck(CancellationToken cancellationToken)
+    {
+        var result = await _deckService.GetTestDeckAsync(cancellationToken);
+        if (result.IsFailed)
+        {
+            return NotFound(result.Errors);
+        }
+
+        return Ok(result);
+    }
 
     [HttpGet("GetDeckById/{id}")]
     [ProducesResponseType(typeof(Deck), 200)]

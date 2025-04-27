@@ -1,6 +1,8 @@
 using System.Text.Json;
 using FlashCardGeneratorAPI.Models;
 using FluentResults;
+using Newtonsoft.Json.Linq;
+using NLanguageTag;
 using OpenAI.Chat;
 
 namespace FlashCardGeneratorAPI.Services;
@@ -8,7 +10,14 @@ namespace FlashCardGeneratorAPI.Services;
 public class GeneratorService : IGeneratorService
 {
     private readonly ChatClient _client;
-    private List<ChatMessage> _messages = new();
+    private List<ChatMessage> _messages =
+    [
+        ..new ChatMessage[]
+        {
+            new SystemChatMessage("You are a language learning flash card deck generator. You will receive JSON which will include information correlating to what that should be put in the deck, including the original language, a target language, a language fluency level, and possibly a region. You will output a number of flashcard objects that contain the most important phrases and words of the target language at a specific fluency level of a specific region that uses that target language. It is important to prioritize the target language when choosing phrases. The words and phrases should take into account the dialect and natural language of the specific region and should be a mix of casual and formal. The JSON schema for the response will be attached."),
+        }
+    ];
+    
     private readonly ChatCompletionOptions _options;
     
     public GeneratorService(string apiKey, string model)
@@ -16,14 +25,13 @@ public class GeneratorService : IGeneratorService
         _client = new(model: model, apiKey: apiKey);
         
         // Load the JSON schema from the file
-        var jsonSchema = File.ReadAllText("FlashCardListSchema.json") ?? throw new Exception("Failed to read JSON schema");
+        var jsonSchema = File.ReadAllText("GeneratedCardsSchema.json") ?? throw new Exception("Failed to read JSON schema");
         _options = new ChatCompletionOptions
         {
             ResponseFormat = ChatResponseFormat.CreateJsonSchemaFormat(
-                jsonSchemaFormatName: "FlashCardList",
+                jsonSchemaFormatName: "GeneratedCards",
                 jsonSchema: BinaryData.FromString(jsonSchema),
-                jsonSchemaIsStrict: false),
-            
+                jsonSchemaIsStrict: true),
         };
     }
     
@@ -32,16 +40,32 @@ public class GeneratorService : IGeneratorService
         string serializedRequest = Newtonsoft.Json.JsonConvert.SerializeObject(request);
         _messages.Add(serializedRequest);
         ChatCompletion completion = await _client.CompleteChatAsync(_messages, _options);
-        using JsonDocument structuredJson = JsonDocument.Parse(completion.Content[0].Text);
-        List<FlashCard> flashCardsList = new();
-        var flashCardsProperty = structuredJson.RootElement.GetProperty("flashCards");
+        JObject structuredJson = JObject.Parse(completion.Content[0].Text);
+        var flashCardsProperty = structuredJson["flashCards"] ?? throw new Exception("FlashCards property is null");
         
-        foreach (var flashCardElement in flashCardsProperty.EnumerateArray())
+        List<FlashCard> flashCardsList = new();
+        
+        foreach (var flashCardElement in flashCardsProperty.Children())
         {
             try
             {
-                FlashCard flashCard = Newtonsoft.Json.JsonConvert.DeserializeObject<FlashCard>(flashCardElement.GetRawText())
-                                      ?? throw new Exception("Failed to deserialize JSON");
+                var flashCard = new FlashCard
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Level = request.Level,
+                    FrontView = new FrontView
+                    {
+                        Language = request.OriginalLanguage,
+                        Text = flashCardElement["OriginalLanguage"]?["Text"]?.ToString() ??
+                               throw new Exception("Original language text is null"),
+                    },
+                    BackView = new BackView
+                    {
+                        Language = request.TargetLanguage,
+                        Text = flashCardElement["TargetLanguage"]?["Text"]?.ToString() ?? 
+                               throw new Exception("Target language text is null"),
+                    }
+                };
                 flashCardsList.Add(flashCard);
             }
             catch (Exception e)

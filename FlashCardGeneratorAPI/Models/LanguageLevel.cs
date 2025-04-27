@@ -1,5 +1,9 @@
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
 namespace FlashCardGeneratorAPI.Models;
 
+[JsonConverter(typeof(StringEnumConverter))]
 public enum LanguageLevel
 {
     A1,
