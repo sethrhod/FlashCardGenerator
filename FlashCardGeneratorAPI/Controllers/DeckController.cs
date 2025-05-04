@@ -20,7 +20,7 @@ public class DeckController : ControllerBase
     }
     
     [HttpGet("GetTestDeck")]
-    [ProducesResponseType(typeof(Deck), 200)]
+    [ProducesResponseType(typeof(OkObjectResult), 200)]
     [ProducesResponseType(404)]
     [ProducesResponseType(typeof(ProblemDetails), 500)]
     public async Task<IActionResult> GetTestDeck(CancellationToken cancellationToken)
@@ -35,7 +35,7 @@ public class DeckController : ControllerBase
     }
 
     [HttpGet("GetDeckById/{id}")]
-    [ProducesResponseType(typeof(Deck), 200)]
+    [ProducesResponseType(typeof(OkObjectResult), 200)]
     [ProducesResponseType(404)]
     [ProducesResponseType(typeof(ProblemDetails), 500)]
     public async Task<IActionResult> GetDeckById([FromRoute] string id, CancellationToken cancellationToken)
@@ -50,7 +50,7 @@ public class DeckController : ControllerBase
     }
 
     [HttpPost("CreateDeck")]
-    [ProducesResponseType(typeof(Deck), 201)]
+    [ProducesResponseType(typeof(CreatedAtActionResult), 201)]
     [ProducesResponseType(typeof(ProblemDetails), 500)]
     public async Task<IActionResult> CreateDeck(GenerationRequest request, CancellationToken cancellationToken)
     {
@@ -64,7 +64,7 @@ public class DeckController : ControllerBase
     }
     
     [HttpPut("UpdateDeck/{id}")]
-    [ProducesResponseType(typeof(Deck), 201)]
+    [ProducesResponseType(typeof(CreatedAtActionResult), 201)]
     [ProducesResponseType(404)]
     [ProducesResponseType(typeof(ProblemDetails), 500)]
     public async Task<IActionResult> UpdateDeck([FromRoute] string id, [FromBody] Deck deck, CancellationToken cancellationToken)
@@ -79,7 +79,7 @@ public class DeckController : ControllerBase
     }
     
     [HttpDelete("DeleteDeck")]
-    [ProducesResponseType(204)]
+    [ProducesResponseType(typeof(NoContentResult), 204)]
     [ProducesResponseType(404)]
     [ProducesResponseType(typeof(ProblemDetails), 500)]
     public async Task<IActionResult> DeleteDeck([FromRoute] string id, CancellationToken cancellationToken)
