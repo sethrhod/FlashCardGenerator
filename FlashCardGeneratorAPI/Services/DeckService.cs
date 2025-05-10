@@ -16,7 +16,7 @@ public class DeckService : IDeckService
         _generatorService = generatorService;
     }
 
-    public async Task<Result<Deck>> GetTestDeckAsync(CancellationToken cancellationToken)
+    public async Task<Result<IEnumerable<Deck>>> GetTestDecksAsync(CancellationToken cancellationToken)
     {
         var cards = await _generatorService.GenerateFlashCards(new GenerationRequest
         {
@@ -30,16 +30,19 @@ public class DeckService : IDeckService
         {
             return Result.Fail(cards.Errors);
         }
-
-        var deck = new Deck
+        
+        var decks = new List<Deck>();
+        for (int i = 0; i < 5; i++)
         {
-            Id = Guid.NewGuid().ToString(),
-            Name = string.Empty,
-            UserId = string.Empty,
-            FlashCards = cards.Value
-        };
-
-        return deck;
+            decks.Add(new Deck
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = "Test Deck " + i,
+                UserId = "Test User",
+                FlashCards = cards.Value
+            });
+        }
+        return decks;
     }
     
     public async Task<Result<Deck>> GetDeckByIdAsync(string id, CancellationToken cancellationToken)
@@ -101,7 +104,7 @@ public class DeckService : IDeckService
 
 public interface IDeckService
 {
-    Task<Result<Deck>> GetTestDeckAsync(CancellationToken cancellationToken);
+    Task<Result<IEnumerable<Deck>>> GetTestDecksAsync(CancellationToken cancellationToken);
     Task<Result<Deck>> GetDeckByIdAsync(string id, CancellationToken cancellationToken);
     
     Task<Result<Deck>> CreateDeckAsync(GenerationRequest request, CancellationToken cancellationToken);
