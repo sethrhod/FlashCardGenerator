@@ -18,11 +18,14 @@ public class DeckService : IDeckService
 
     public async Task<Result<IEnumerable<Deck>>> GetTestDecksAsync(CancellationToken cancellationToken)
     {
+        var originalLanguage = Language.EN;
+        var targetLanguage = Language.PT;
+        var languageLevel = LanguageLevel.A1;
         var cards = await _generatorService.GenerateFlashCards(new GenerationRequest
         {
-            OriginalLanguage = Language.EN,
-            TargetLanguage = Language.PT,
-            Level = LanguageLevel.A1,
+            OriginalLanguage = originalLanguage,
+            TargetLanguage = targetLanguage,
+            Level = languageLevel,
             Count = 5,
         }, CancellationToken.None);
         
@@ -39,6 +42,9 @@ public class DeckService : IDeckService
                 Id = Guid.NewGuid().ToString(),
                 Name = "Test Deck " + i,
                 UserId = "Test User",
+                OriginalLanguage = originalLanguage,
+                TargetLanguage = targetLanguage,
+                Level = languageLevel,
                 FlashCards = cards.Value
             });
         }
@@ -69,6 +75,9 @@ public class DeckService : IDeckService
             Id = Guid.NewGuid().ToString(),
             Name = string.Empty,
             UserId = string.Empty,
+            OriginalLanguage = request.OriginalLanguage,
+            TargetLanguage = request.TargetLanguage,
+            Level = request.Level,
             FlashCards = cards.Value
         };
 
