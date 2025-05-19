@@ -15,39 +15,15 @@ public class DeckService : IDeckService
         _deckRepository = deckRepository;
         _generatorService = generatorService;
     }
-
-    public async Task<Result<IEnumerable<Deck>>> GetTestDecksAsync(CancellationToken cancellationToken)
+    
+    public async Task<Result<IEnumerable<Deck>>> GetDecksAsync(CancellationToken cancellationToken)
     {
-        var originalLanguage = Language.EN;
-        var targetLanguage = Language.PT;
-        var languageLevel = LanguageLevel.A1;
-        var cards = await _generatorService.GenerateFlashCards(new GenerationRequest
+        var decks = await _deckRepository.GetDecksAsync(cancellationToken);
+        if (decks.IsFailed)
         {
-            OriginalLanguage = originalLanguage,
-            TargetLanguage = targetLanguage,
-            Level = languageLevel,
-            Count = 5,
-        }, CancellationToken.None);
-        
-        if (cards.IsFailed)
-        {
-            return Result.Fail(cards.Errors);
+            return Result.Fail(decks.Errors);
         }
-        
-        var decks = new List<Deck>();
-        for (int i = 0; i < 5; i++)
-        {
-            decks.Add(new Deck
-            {
-                Id = Guid.NewGuid().ToString(),
-                Name = "Test Deck " + i,
-                UserId = "Test User",
-                OriginalLanguage = originalLanguage,
-                TargetLanguage = targetLanguage,
-                Level = languageLevel,
-                FlashCards = cards.Value
-            });
-        }
+
         return decks;
     }
     
@@ -62,9 +38,9 @@ public class DeckService : IDeckService
         return deck.Value;
     }
     
-    public async Task<Result<Deck>> CreateDeckAsync(GenerationRequest request, CancellationToken cancellationToken)
+    public async Task<Result<Deck>> CreateDeckAsync(GenerationRequestDTO requestDto, CancellationToken cancellationToken)
     {
-        var cards = await _generatorService.GenerateFlashCards(request, cancellationToken);
+        var cards = await _generatorService.GenerateFlashCards(requestDto, cancellationToken);
         if (cards.IsFailed)
         {
             return Result.Fail(cards.Errors);
@@ -75,13 +51,15 @@ public class DeckService : IDeckService
             Id = Guid.NewGuid().ToString(),
             Name = string.Empty,
             UserId = string.Empty,
-            OriginalLanguage = request.OriginalLanguage,
-            TargetLanguage = request.TargetLanguage,
-            Level = request.Level,
+            OriginalLanguage = Language.Parse(requestDto.OriginalLanguage),
+            TargetLanguage = Language.Parse(requestDto.TargetLanguage),
+            Level = Enum.Parse<LanguageLevel>(requestDto.Level),
             FlashCards = cards.Value
         };
+        
+        var createdDeck = await _deckRepository.CreateDeckAsync(deck);
 
-        return deck;
+        return createdDeck;
     }
     
     public async Task<Result<Deck>> UpdateDeckAsync(string id, Deck deck, CancellationToken cancellationToken)
@@ -113,10 +91,10 @@ public class DeckService : IDeckService
 
 public interface IDeckService
 {
-    Task<Result<IEnumerable<Deck>>> GetTestDecksAsync(CancellationToken cancellationToken);
+    Task<Result<IEnumerable<Deck>>> GetDecksAsync (CancellationToken cancellationToken);
     Task<Result<Deck>> GetDeckByIdAsync(string id, CancellationToken cancellationToken);
     
-    Task<Result<Deck>> CreateDeckAsync(GenerationRequest request, CancellationToken cancellationToken);
+    Task<Result<Deck>> CreateDeckAsync(GenerationRequestDTO requestDto, CancellationToken cancellationToken);
     Task<Result<Deck>> UpdateDeckAsync(string id, Deck deck, CancellationToken cancellationToken);
     Task<Result<bool>> DeleteDeckAsync(string id, CancellationToken cancellationToken);
 }

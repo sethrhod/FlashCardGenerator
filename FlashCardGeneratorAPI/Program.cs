@@ -6,7 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddUserSecrets<Program>();
 
 // Add services to the container.
-builder.Services.AddScoped<IDeckRepository, DeckRepository>();
+builder.Services.AddSingleton<IDeckRepository, DeckRepository>();
 builder.Services.AddScoped<IDeckService, DeckService>();
 builder.Services.AddScoped<IGeneratorService, GeneratorService>(sp => new GeneratorService(
     apiKey: builder.Configuration["OPENAI_API_KEY"] ??

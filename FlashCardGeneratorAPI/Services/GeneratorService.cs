@@ -35,9 +35,9 @@ public class GeneratorService : IGeneratorService
         };
     }
     
-    public async Task<Result<List<FlashCard>>> GenerateFlashCards(GenerationRequest request, CancellationToken cancellationToken)
+    public async Task<Result<List<FlashCard>>> GenerateFlashCards(GenerationRequestDTO requestDto, CancellationToken cancellationToken)
     {
-        string serializedRequest = Newtonsoft.Json.JsonConvert.SerializeObject(request);
+        string serializedRequest = Newtonsoft.Json.JsonConvert.SerializeObject(requestDto);
         _messages.Add(serializedRequest);
         ChatCompletion completion = await _client.CompleteChatAsync(_messages, _options);
         JObject structuredJson = JObject.Parse(completion.Content[0].Text);
@@ -52,16 +52,16 @@ public class GeneratorService : IGeneratorService
                 var flashCard = new FlashCard
                 {
                     Id = Guid.NewGuid().ToString(),
-                    Level = request.Level,
+                    Level = Enum.Parse<LanguageLevel>(requestDto.Level),
                     FrontView = new FrontView
                     {
-                        Language = request.OriginalLanguage,
+                        Language = Language.Parse(requestDto.OriginalLanguage),
                         Text = flashCardElement["OriginalLanguage"]?["Text"]?.ToString() ??
                                throw new Exception("Original language text is null"),
                     },
                     BackView = new BackView
                     {
-                        Language = request.TargetLanguage,
+                        Language = Language.Parse(requestDto.TargetLanguage),
                         Text = flashCardElement["TargetLanguage"]?["Text"]?.ToString() ?? 
                                throw new Exception("Target language text is null"),
                     }
@@ -80,5 +80,5 @@ public class GeneratorService : IGeneratorService
 
 public interface IGeneratorService
 {
-    Task<Result<List<FlashCard>>> GenerateFlashCards(GenerationRequest request, CancellationToken cancellationToken);
+    Task<Result<List<FlashCard>>> GenerateFlashCards(GenerationRequestDTO requestDto, CancellationToken cancellationToken);
 }
